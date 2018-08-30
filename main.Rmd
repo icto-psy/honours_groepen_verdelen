@@ -1,0 +1,36 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This script distributes the hoursprogram students into two groups that are more or less homogeneous.
+
+```{r}
+## Load libraries
+library(tidyverse)
+library(rattle)
+## Read in data and normalize variable_names, skip the first row. 
+data <- read_csv("Aanmelding_Honoursprogramma_Reductionisme__Psychologie_1617.csv",skip = 1)
+names(data) <- normVarNames(names(data))
+
+# Only keep the data that we need. All personal info, sex, whether student had philosophy at school and the link to the CV
+relevant_data <-
+  data %>% 
+    select(contains("persoonlijke_informatie"),one_of("geslacht"),one_of("ik_heb_filosofie_als_examenvak_gedaan_op_de_middelbare_school"),contains("cv_motivatie_en_essay"))
+
+
+# Generate groups. 
+groups <- 
+relevant_data %>% 
+  mutate(combination = paste0(geslacht,",",ik_heb_filosofie_als_examenvak_gedaan_op_de_middelbare_school)) %>% # Make a combination of geslacht and filosofie
+  group_by(combination) %>% # group the data by combination
+  mutate(n = n()) %>%  # Count the occurences of each combination
+  arrange(combination) %>% # Sort the combination. 
+  mutate(group = c(rep(0,ceiling(unique(n)/2)),rep(1,unique(n)-ceiling(unique(n)/2)))) # Calculate the group by splitting each combination more or less in two. 
+  
+# Write to csv file. 
+write_csv(groups,path = "groups_for_max.csv")
+  
+
+```
+
